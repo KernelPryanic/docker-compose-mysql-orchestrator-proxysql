@@ -1,0 +1,38 @@
+[mysqld]
+pid-file                                                    = /var/run/mysqld/mysqld.pid
+socket                                                      = /var/run/mysqld/mysqld.sock
+datadir                                                     = /var/lib/mysql
+log-error                                                   = /var/log/mysql/error.log
+# general_log_file                                            = /var/log/mysql/mysql.log
+# general_log                                                 = 1                                                      
+bind-address                                                = 0.0.0.0
+# Disabling symbolic-links is recommended to prevent assorted security risks
+symbolic-links                                              = 0
+
+binlog-format                                               = ROW
+binlog-checksum                                             = none
+log-slave-updates                                           = on
+gtid-mode                                                   = on
+enforce-gtid-consistency                                    = on
+master-info-repository                                      = TABLE
+relay-log-info-repository                                   = TABLE
+relay-log-recovery                                          = on
+sync-master-info                                            = 1
+server-id                                                   = 2
+log-bin                                                     = /var/log/mysql/mysql-bin.log
+report-host                                                 = mysql_slave
+report-port                                                 = 3306
+port                                                        = 3306
+
+transaction-write-set-extraction                            = XXHASH64
+loose-group-replication-group-name                          = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
+loose-group-replication-start-on-boot                       = off
+loose-group_replication_ip_whitelist                        = "10.1.18.0/24"
+loose-group-replication-local-address                       = "mysql_slave:33069"
+loose-group-replication-group-seeds                         = "mysql_master:33069, mysql_slave:33069"
+loose-group-replication-bootstrap-group                     = off
+loose-group-replication-single-primary-mode                 = on
+loose-group-replication-enforce-update-everywhere-checks    = off
+loose-group_replication_recovery_get_public_key             = 1
+
+plugin-load-add=group_replication=group_replication.so

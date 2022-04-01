@@ -1,0 +1,136 @@
+version: "3.8"
+
+services:
+  orchestrator:
+    image: orchestrator:3.2.6
+    container_name: orchestrator
+    environment:
+      - MYSQL_ROOT_PASSWORD=orc123
+    ports:
+      - target: 3000
+        published: 3000
+        mode: host
+    volumes:
+      - orchestrator_db:/var/lib/mysql
+    networks:
+      - autofailover
+    # entrypoint: [ "sleep", "infinity" ]
+
+  orchestrator_init:
+    image: orchestrator:3.2.6
+    depends_on:
+      - orchestrator
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 30
+        window: 2s
+    environment:
+      - MYSQL_ROOT_PASSWORD=orc123
+    volumes:
+      - orchestrator_db:/var/lib/mysql
+    networks:
+      - autofailover
+    entrypoint:
+      [
+        "bash",
+        "-c",
+        "mysql -u root -porc123 -h orchestrator < orchestrator.sql"
+      ]
+
+  mysql_master:
+    image: mysql-master:latest
+    container_name: mysql_master
+    environment:
+      - MYSQL_ROOT_PASSWORD=orc123
+    volumes:
+      - mysql_master:/var/lib/mysql
+    networks:
+      - autofailover
+    healthcheck:
+      test: [ "CMD", "nc", "-z", "localhost", "3306" ]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+    # deploy:
+    #   restart_policy:
+    #     condition: none
+    # entrypoint: [ "sleep", "infinity" ]
+
+  mysql_replica_init:
+    image: mysql-master:latest
+    environment:
+      - MYSQL_ROOT_PASSWORD=orc123
+    networks:
+      - autofailover
+    depends_on:
+      mysql_master:
+        condition: service_healthy
+    entrypoint:
+      [
+        "bash",
+        "-c",
+        "mysql -u root -porc123 -h mysql_master < replication_setup.sql && mysql -u root -porc123 -h mysql_slave < replication_setup.sql"
+      ]
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 3
+        window: 2s
+
+  mysql_slave_init:
+    image: mysql-slave:latest
+    environment:
+      - MYSQL_ROOT_PASSWORD=orc123
+    networks:
+      - autofailover
+    depends_on:
+      mysql_slave:
+        condition: service_healthy
+    entrypoint:
+      [
+        "bash",
+        "-c",
+        "mysql -u root -porc123 -h mysql_slave < replication_setup.sql"
+      ]
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 3
+        window: 2s
+
+  mysql_slave:
+    image: mysql-slave:latest
+    container_name: mysql_slave
+    environment:
+      - MYSQL_ROOT_PASSWORD=orc123
+    volumes:
+      - mysql_slave:/var/lib/mysql
+    networks:
+      - autofailover
+    depends_on:
+      mysql_master:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD", "nc", "-z", "localhost", "3306" ]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+    # deploy:
+    #   restart_policy:
+    #     condition: none
+
+volumes:
+  orchestrator_db: {}
+  mysql_master: {}
+  mysql_slave: {}
+
+networks:
+  autofailover:
+    driver: overlay
+    ipam:
+      config:
+        - subnet: 10.1.18.0/24
