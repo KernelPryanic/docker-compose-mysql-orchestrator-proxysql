@@ -5,13 +5,14 @@ services:
     image: orchestrator:3.2.6
     container_name: orchestrator
     environment:
-      - MYSQL_ROOT_PASSWORD=orc123
+      - MYSQL_ROOT_PASSWORD=pass123
     ports:
       - target: 3000
         published: 3000
         mode: host
     volumes:
       - orchestrator_db:/var/lib/mysql
+      - ./orchestrator/orchestrator.conf.json:/etc/orchestrator.conf.json
     networks:
       - autofailover
     # entrypoint: [ "sleep", "infinity" ]
@@ -27,25 +28,27 @@ services:
         max_attempts: 30
         window: 2s
     environment:
-      - MYSQL_ROOT_PASSWORD=orc123
+      - MYSQL_ROOT_PASSWORD=pass123
     volumes:
       - orchestrator_db:/var/lib/mysql
+      - ./orchestrator/orchestrator.sql:/orchestrator.sql
     networks:
       - autofailover
     entrypoint:
       [
         "bash",
         "-c",
-        "mysql -u root -porc123 -h orchestrator < orchestrator.sql"
+        "mysql -u root -ppass123 -h orchestrator < orchestrator.sql"
       ]
 
   mysql_master:
     image: mysql-master:latest
     container_name: mysql_master
     environment:
-      - MYSQL_ROOT_PASSWORD=orc123
+      - MYSQL_ROOT_PASSWORD=pass123
     volumes:
       - mysql_master:/var/lib/mysql
+      - ./mysql/master/mysql.cnf:/etc/my.cnf
     networks:
       - autofailover
     healthcheck:
@@ -58,10 +61,12 @@ services:
     #     condition: none
     # entrypoint: [ "sleep", "infinity" ]
 
-  mysql_replica_init:
+  mysql_master_init:
     image: mysql-master:latest
     environment:
-      - MYSQL_ROOT_PASSWORD=orc123
+      - MYSQL_ROOT_PASSWORD=pass123
+    volumes:
+      - ./mysql/master/replication_setup.sql:/replication_setup.sql
     networks:
       - autofailover
     depends_on:
@@ -71,7 +76,7 @@ services:
       [
         "bash",
         "-c",
-        "mysql -u root -porc123 -h mysql_master < replication_setup.sql && mysql -u root -porc123 -h mysql_slave < replication_setup.sql"
+        "mysql -u root -ppass123 -h mysql_master < replication_setup.sql"
       ]
     deploy:
       restart_policy:
@@ -83,7 +88,9 @@ services:
   mysql_slave_init:
     image: mysql-slave:latest
     environment:
-      - MYSQL_ROOT_PASSWORD=orc123
+      - MYSQL_ROOT_PASSWORD=pass123
+    volumes:
+      - ./mysql/slave/replication_setup.sql:/replication_setup.sql
     networks:
       - autofailover
     depends_on:
@@ -93,7 +100,7 @@ services:
       [
         "bash",
         "-c",
-        "mysql -u root -porc123 -h mysql_slave < replication_setup.sql"
+        "mysql -u root -ppass123 -h mysql_slave < replication_setup.sql"
       ]
     deploy:
       restart_policy:
@@ -106,9 +113,10 @@ services:
     image: mysql-slave:latest
     container_name: mysql_slave
     environment:
-      - MYSQL_ROOT_PASSWORD=orc123
+      - MYSQL_ROOT_PASSWORD=pass123
     volumes:
       - mysql_slave:/var/lib/mysql
+      - ./mysql/slave/mysql.cnf:/etc/my.cnf
     networks:
       - autofailover
     depends_on:
@@ -122,6 +130,21 @@ services:
     # deploy:
     #   restart_policy:
     #     condition: none
+
+  proxysql:
+    image: proxysql:2.3.2
+    container_name: proxysql
+    volumes:
+      - ./proxysql/proxysql.cnf:/etc/proxysql.cnf
+    networks:
+      - autofailover
+    ports:
+      - target: 6032
+        published: 6032
+        mode: host
+      - target: 6033
+        published: 6033
+        mode: host
 
 volumes:
   orchestrator_db: {}

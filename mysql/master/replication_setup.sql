@@ -1,12 +1,9 @@
-SET
-    @@GLOBAL.group_replication_bootstrap_group = ON;
-
-CREATE USER IF NOT EXISTS 'replicator' @'%' IDENTIFIED BY 'orc123';
-
-CREATE USER IF NOT EXISTS 'orchestrator' @'%' IDENTIFIED BY 'orc123';
+CREATE USER IF NOT EXISTS 'replicator' @'%' IDENTIFIED BY 'pass123';
 
 GRANT REPLICATION SLAVE,
 USAGE ON *.* TO 'replicator' @'%';
+
+CREATE USER IF NOT EXISTS 'orchestrator' @'%' IDENTIFIED BY 'pass123';
 
 GRANT RELOAD,
 PROCESS,
@@ -25,16 +22,19 @@ GRANT
 SELECT
     ON meta.* TO 'orchestrator' @'%';
 
+CREATE USER IF NOT EXISTS 'proxysql' @'%' IDENTIFIED BY 'pass123';
+
 GRANT
 SELECT
-    ON performance_schema.replication_group_members TO 'orchestrator' @'%';
+    on sys.* to 'proxysql' @'%';
 
 FLUSH PRIVILEGES;
 
-CHANGE MASTER TO MASTER_USER = 'replicator',
-MASTER_PASSWORD = 'orc123' for channel 'group_replication_recovery';
+-- stop slave;
 
-START GROUP_REPLICATION;
+-- CHANGE MASTER TO MASTER_HOST = 'mysql_slave',
+-- MASTER_USER = 'replicator',
+-- MASTER_PASSWORD = 'pass123',
+-- MASTER_AUTO_POSITION = 1;
 
-SET
-    @@GLOBAL.group_replication_bootstrap_group = OFF;
+-- start slave;

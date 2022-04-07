@@ -35,4 +35,6 @@ loose-group-replication-single-primary-mode                 = on
 loose-group-replication-enforce-update-everywhere-checks    = off
 loose-group_replication_recovery_get_public_key             = 1
 
+read_only                                                   = 0
+
 plugin-load-add=group_replication=group_replication.so

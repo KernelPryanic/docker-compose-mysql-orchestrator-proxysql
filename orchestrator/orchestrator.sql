@@ -1,4 +1,4 @@
-CREATE USER IF NOT EXISTS 'orchestrator' @'%' IDENTIFIED BY 'orc123';
+CREATE USER IF NOT EXISTS 'orchestrator' @'%' IDENTIFIED BY 'pass123';
 
 CREATE DATABASE IF NOT EXISTS orchestrator;
 
