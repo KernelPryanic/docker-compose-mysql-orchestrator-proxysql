@@ -1,64 +1,25 @@
 version: "3.8"
 
 services:
-  # orchestrator:
-  #   image: orchestrator:3.2.6
-  #   container_name: orchestrator
-  #   environment:
-  #     - MYSQL_ROOT_PASSWORD=pass123
-  #   ports:
-  #     - target: 3000
-  #       published: 3000
-  #       mode: host
-  #   volumes:
-  #     - orchestrator_db:/var/lib/mysql
-  #     - ./orchestrator/orchestrator.conf.json:/etc/orchestrator.conf.json
+  # replication_manager_delay:
+  #   image: python:3.9-slim
+  #   container_name: replication_manager_delay
   #   networks:
   #     - autofailover
-  #   # entrypoint: [ "sleep", "infinity" ]
-
-  # orchestrator_init:
-  #   image: orchestrator:3.2.6
-  #   depends_on:
-  #     - orchestrator
-  #   deploy:
-  #     restart_policy:
-  #       condition: on-failure
-  #       delay: 10s
-  #       max_attempts: 30
-  #       window: 2s
-  #   environment:
-  #     - MYSQL_ROOT_PASSWORD=pass123
-  #   volumes:
-  #     - orchestrator_db:/var/lib/mysql
-  #     - ./orchestrator/orchestrator.sql:/orchestrator.sql
-  #   networks:
-  #     - autofailover
-  #   entrypoint:
-  #     [
-  #       "bash",
-  #       "-c",
-  #       "mysql -u root -ppass123 -h orchestrator < orchestrator.sql"
-  #     ]
-
-  replication_manager_delay:
-    image: python:3.9-slim
-    container_name: replication_manager_delay
-    networks:
-      - autofailover
-    entrypoint: [
-      "bash",
-      "-c",
-      "apt-get update && apt-get -y install netcat && sleep 20 && python3 -m http.server 5000"
-    ]
-    healthcheck:
-      test: [ "CMD", "nc", "-z", "localhost", "5000" ]
-      interval: 15s
-      timeout: 10s
-      retries: 5
+  #   entrypoint: [
+  #     "bash",
+  #     "-c",
+  #     "apt-get update && apt-get -y install netcat && sleep 20 && python3 -m http.server 5000"
+  #   ]
+  #   healthcheck:
+  #     test: [ "CMD", "nc", "-z", "localhost", "5000" ]
+  #     interval: 15s
+  #     timeout: 10s
+  #     retries: 5
 
   replication_manager:
-    image: signal18/replication-manager
+    build: ./replication-manager
+    image: replication-manager
     container_name: replication_manager
     ports:
       - target: 10001
@@ -69,8 +30,8 @@ services:
         condition: service_healthy
       mysql_slave:
         condition: service_healthy
-      replication_manager_delay:
-        condition: service_healthy
+      # replication_manager_delay:
+      #   condition: service_healthy
     volumes:
       - ./replication-manager/config.toml:/etc/replication-manager/config.toml
       - ./replication-manager/autorejoin-gtid.sh:/opt/autorejoin-gtid.sh
@@ -78,7 +39,8 @@ services:
       - autofailover
 
   mysql_master:
-    image: mysql-master:latest
+    build: ./mysql/master
+    image: mysql-master:5.7
     container_name: mysql_master
     environment:
       - MYSQL_ROOT_PASSWORD=pass123
@@ -92,13 +54,9 @@ services:
       interval: 15s
       timeout: 10s
       retries: 5
-    # deploy:
-    #   restart_policy:
-    #     condition: none
-    # entrypoint: [ "sleep", "infinity" ]
 
   mysql_master_init:
-    image: mysql-master:latest
+    image: mysql-master:5.7
     environment:
       - MYSQL_ROOT_PASSWORD=pass123
     volumes:
@@ -121,8 +79,28 @@ services:
         max_attempts: 3
         window: 2s
 
+  mysql_slave:
+    build: ./mysql/slave
+    image: mysql-slave:5.7
+    container_name: mysql_slave
+    environment:
+      - MYSQL_ROOT_PASSWORD=pass123
+    volumes:
+      - mysql_slave:/var/lib/mysql
+      - ./mysql/slave/mysql.cnf:/etc/my.cnf
+    networks:
+      - autofailover
+    depends_on:
+      mysql_master:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD", "nc", "-z", "localhost", "3306" ]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+
   mysql_slave_init:
-    image: mysql-slave:latest
+    image: mysql-slave:5.7
     environment:
       - MYSQL_ROOT_PASSWORD=pass123
     volumes:
@@ -145,29 +123,8 @@ services:
         max_attempts: 3
         window: 2s
 
-  mysql_slave:
-    image: mysql-slave:latest
-    container_name: mysql_slave
-    environment:
-      - MYSQL_ROOT_PASSWORD=pass123
-    volumes:
-      - mysql_slave:/var/lib/mysql
-      - ./mysql/slave/mysql.cnf:/etc/my.cnf
-    networks:
-      - autofailover
-    depends_on:
-      mysql_master:
-        condition: service_healthy
-    healthcheck:
-      test: [ "CMD", "nc", "-z", "localhost", "3306" ]
-      interval: 15s
-      timeout: 10s
-      retries: 5
-    # deploy:
-    #   restart_policy:
-    #     condition: none
-
   proxysql:
+    build: ./proxysql
     image: proxysql:2.3.2
     container_name: proxysql
     volumes:

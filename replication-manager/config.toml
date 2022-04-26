@@ -2,44 +2,20 @@
 http-bind-address = "0.0.0.0"
 http-server = true
 monitoring-save-config = true
-verbose = true
+# verbose = true
 
+[Main]
 db-servers-credential = "root:pass123"
 db-servers-hosts = "mysql_master:3306,mysql_slave:3306"
 failover-mode = "automatic"
 replication-credential = "replicator:pass123"
 autorejoin = true
-autorejoin-backup-binlog = true
-autorejoin-mysqldump = true
-force-slave-no-gtid-mode = true
+autorejoin-backup-binlog = false
+autorejoin-mysqldump = false
 force-slave-readonly = true
-autorejoin-slave-positional-hearbeat = true
+# force-slave-no-gtid-mode = true
+# autorejoin-slave-positional-hearbeat = true   # Pseudo GTID, works in couple with positional replication
 
 autorejoin-script = "/opt/autorejoin-gtid.sh"
 
 # user = "root:005ccea88499d100d9022b0a33136ae9ae1ff0d1884ecee0f4b7"
-
-# include = "/etc/replication-manager/cluster.d"
-#include="/etc/replication-manager/local/masterslave/haproxy"
-#include="/etc/replication-manager/local/binlogserver"
-#include="/etc/replication-manager/local/features/apisecure"
-#include="/etc/replication-manager/local/features/arbitrator"
-#include="/etc/replication-manager/local/features/backup"
-#include="/etc/replication-manager/local/features/backup-s3"
-#include="/etc/replication-manager/local/features/compat1local0"
-#include="/etc/replication-manager/local/features/enforce"
-#include="/etc/replication-manager/local/features/graphite"
-#include="/etc/replication-manager/local/features/ipv6"
-#include="/etc/replication-manager/local/features/scheduler"
-#include="/etc/replication-manager/local/masterslave"
-#include="/etc/replication-manager/local/masterslave/consul"
-#include="/etc/replication-manager/local/masterslave/maxscale"
-#include="/etc/replication-manager/local/masterslave/myproxy"
-#include="/etc/replication-manager/local/masterslave/shardproxy"
-#include="/etc/replication-manager/local/masterslaveslave"
-#include="/etc/replication-manager/local/multimaster"
-#include="/etc/replication-manager/local/multimasterring"
-#include="/etc/replication-manager/local/multisource"
-#include="/etc/replication-manager/local/multitiersalve"
-#include="/etc/replication-manager/local/mutlitiercluster"
-#include="/etc/replication-manager/local/postgres"
