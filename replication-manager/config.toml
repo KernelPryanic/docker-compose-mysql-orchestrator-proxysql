@@ -7,15 +7,33 @@ monitoring-save-config = true
 [Main]
 db-servers-credential = "root:pass123"
 db-servers-hosts = "mysql_master:3306,mysql_slave:3306"
-failover-mode = "automatic"
+force-slave-readonly = true
 replication-credential = "replicator:pass123"
+# force-slave-no-gtid-mode = true   # Disable GTID in favor of positional replication
+
+monitoring-ticker = 1 # Monitoring delay
+
 autorejoin = true
 autorejoin-backup-binlog = false
 autorejoin-mysqldump = false
-force-slave-readonly = true
-# force-slave-no-gtid-mode = true
+autorejoin-script = "/opt/autorejoin-gtid.sh"
 # autorejoin-slave-positional-hearbeat = true   # Pseudo GTID, works in couple with positional replication
 
-autorejoin-script = "/opt/autorejoin-gtid.sh"
+failover-falsepositive-ping-counter = 3 # Failover after 3 failed probes
+failover-mode = "automatic"
+failover-readonly-state = true
+
+backup-mysqldump-options = "--hex-blob --single-transaction --verbose --all-databases --apply-slave-statements --master-data=1 --gtid --events=false"
+monitoring-scheduler = true
+scheduler-db-servers-logical-backup = true
+scheduler-db-servers-logical-backup-cron = "0/5 * * * *"
+scheduler-db-servers-physical-backup = false
+
+proxysql = true
+proxysql-bootstrap = true
+proxysql-copy-grants = true
+proxysql-password = "pass123"
+proxysql-servers = "proxysql"
+proxysql-user = "radmin"
 
 # user = "root:005ccea88499d100d9022b0a33136ae9ae1ff0d1884ecee0f4b7"
