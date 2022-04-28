@@ -5,23 +5,23 @@ monitoring-save-config = true
 # verbose = true
 
 [Main]
-db-servers-credential = "root:pass123"
-db-servers-hosts = "mysql_master:3306,mysql_slave:3306"
-force-slave-readonly = true
-replication-credential = "replicator:pass123"
-# force-slave-no-gtid-mode = true   # Disable GTID in favor of positional replication
+db-servers-credential = "root:pass123" 
+db-servers-hosts = "mysql_master:3306,mysql_slave:3306" 
+force-slave-no-gtid-mode = false # Disable GTID in favor of positional replication
+force-slave-readonly = true 
+replication-credential = "replicator:pass123" 
 
 monitoring-ticker = 1 # Monitoring delay
 
-autorejoin = true
-autorejoin-backup-binlog = false
-autorejoin-mysqldump = false
-autorejoin-script = "/opt/autorejoin-gtid.sh"
-# autorejoin-slave-positional-hearbeat = true   # Pseudo GTID, works in couple with positional replication
+autorejoin = true 
+autorejoin-backup-binlog = false 
+autorejoin-mysqldump = false 
+autorejoin-script = "/opt/autorejoin-gtid.sh" 
+autorejoin-slave-positional-hearbeat = false # Pseudo GTID, works in couple with positional replication
 
 failover-falsepositive-ping-counter = 3 # Failover after 3 failed probes
-failover-mode = "automatic"
-failover-readonly-state = true
+failover-mode = "automatic" 
+failover-readonly-state = true 
 
 backup-mysqldump-options = "--hex-blob --single-transaction --verbose --all-databases --apply-slave-statements --master-data=1 --gtid --events=false"
 monitoring-scheduler = true

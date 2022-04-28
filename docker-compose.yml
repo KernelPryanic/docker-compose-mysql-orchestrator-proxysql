@@ -75,9 +75,7 @@ services:
     deploy:
       restart_policy:
         condition: on-failure
-        delay: 10s
         max_attempts: 3
-        window: 2s
 
   mysql_slave:
     build: ./mysql/slave
@@ -119,9 +117,7 @@ services:
     deploy:
       restart_policy:
         condition: on-failure
-        delay: 10s
         max_attempts: 3
-        window: 2s
 
   proxysql:
     build: ./proxysql
@@ -140,7 +136,6 @@ services:
         mode: host
 
 volumes:
-  orchestrator_db: {}
   mysql_master: {}
   mysql_slave: {}
 
