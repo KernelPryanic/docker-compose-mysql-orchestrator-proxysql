@@ -15,7 +15,7 @@ monitoring-ticker = 1 # Monitoring delay
 
 autorejoin = true 
 autorejoin-backup-binlog = false 
-autorejoin-mysqldump = false 
+# autorejoin-mysqldump = false 
 autorejoin-script = "/opt/autorejoin-gtid.sh" 
 autorejoin-slave-positional-hearbeat = false # Pseudo GTID, works in couple with positional replication
 
